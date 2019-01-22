@@ -13,13 +13,16 @@
 <body>
 
 
-<div id="loading" >
-	<h1 id="txt1">Carregando...<h1>
-	<h1 id="txt2"><h1>
-</div>
-<div id="eletrico">
-	<button id="btEle" onclick='Wire()'>Sistema Eletrico</button>
-</div>
+	<div id="loading" >
+		<h1 id="txt1">Carregando...<h1>
+		<h1 id="txt2"><h1>
+	</div>
+	<div id="eletrico">
+		<button id="btEle" onclick='Wire()'>Sistema Eletrico</button>
+	</div>
+
+
+
 <script>
 	//////////////////////////////////////////////////////////////////////////////////
 	//		Init
@@ -38,18 +41,23 @@
 	var scene	= new THREE.Scene();
 
 	//globals
+	var houseArr = [];
 	var casa;
+	var eletrico;
 	var wire = false;
 	var instantiate = false;
+
+	var mouse = new THREE.Vector2();
 	//////////////////////////////////////////////////////////////////////////////////
 	//		Initialize a basic camera
 	//////////////////////////////////////////////////////////////////////////////////
 	// Create a camera
-	var camera = new THREE.Camera();
+	var camera = new THREE.PerspectiveCamera();
 	scene.add(camera);
 
-  var light = new THREE.AmbientLight('rgb(255, 255, 255)', 1 ); // soft white light
-  scene.add( light );
+
+  	var light = new THREE.AmbientLight('rgb(255, 255, 255)', 1 ); // soft white light
+  	scene.add( light );
 
 	var spotLight = new THREE.SpotLight( 0xffffff );
 	spotLight.position.set( 5, 5, 5 );
@@ -81,7 +89,7 @@
 	arToolkitSource.init(function onReady(){
 		onResize()
 	})
-
+	document.addEventListener('mousedown', onDocumentMouseDown, false);
 	// handle resize
 	window.addEventListener('resize', function(){
 		onResize()
@@ -125,7 +133,7 @@
 	// init controls for camera
 	var markerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
 		type : 'pattern',
-		patternUrl :'data/markers/patt.casa',
+		patternUrl :'data/markers/patt.hiro',
 		// patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.kanji',
 		// as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
 		changeMatrixMode: 'cameraTransformMatrix'
@@ -143,8 +151,8 @@
   mtlLoader.load( url, function( materials ) {
 
 
-			materials.side = THREE.DoubleSide;
-      materials.preload();
+		materials.side = THREE.DoubleSide;
+        materials.preload();
 
       var objLoader = new THREE.OBJLoader();
       objLoader.setMaterials( materials );
@@ -163,11 +171,23 @@
 					}
 				);*/
 				console.log(object.children)
-				casa = object.children[162];
+				//casa = object.children[162];
+
+				for(let i = 0; i < object.children.length; i++){
+					let obj = new THREE.Mesh(object.children[i].geometry, object.children[i].material);
+					obj.name = object.children[i].name
+					if(obj.name === "casa"){
+						casa = obj;
+					}else if(obj.name === "eletrico"){
+						eletrico = obj;
+					}
+					houseArr.push(obj);
+					scene.add( obj );
+				}
 
 				//object.children[155].material.opacity = 0.2;
 				//casa = object;
-        scene.add( object );
+        		
 
       },
 			function ( xhr ) {
@@ -205,12 +225,13 @@
 	onRenderFcts.push(function(delta){
 		//mesh.rotation.x += Math.PI*delta
 		if(wire){
-			console.log("asdasd");
+			eletrico.material.color = new THREE.Color("rgb(60, 0, 255)");
 			for(var i =0; i < casa.material.length; i++){
 				casa.material[i].wireframe = true;
 			}
 		}else{
 			if(instantiate){
+				eletrico.material.color = new THREE.Color("rgb(255, 255, 255)");
 				for(var i =0; i < casa.material.length; i++){
 					casa.material[i].wireframe = false;
 				}
@@ -240,6 +261,33 @@
 			onRenderFct(deltaMsec/1000, nowMsec/1000)
 		})
 	})
+
+
+	function onDocumentMouseDown(event) {
+        event.preventDefault();
+ 
+        mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+        mouse.y =  - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+		
+		let raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+ 
+        
+         
+        var intersects = raycaster.intersectObjects(houseArr);
+ 
+        if (intersects.length > 0) {
+			
+            for(let i = 0; i < houseArr.length; i++){
+				
+				if(intersects[0].object.name == houseArr[i].name){
+					console.log("clicou em: ", intersects[0].object.name);
+				}
+			}
+
+        }
+ 
+    }
 
 
 </script>
